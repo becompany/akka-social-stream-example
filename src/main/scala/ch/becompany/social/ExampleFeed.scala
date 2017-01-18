@@ -24,16 +24,20 @@ object ExampleFeed {
     * Convert a social network status to a simple WebSocket text message.
     * @return A function converting a status message to a WebSocket message.
     */
-  private def statusToMessage: ((String, Instant, Try[Status])) => Message = {
-    case (network, date, Failure(e)) =>
-      TextMessage(s"Error: $network - ${e.getMessage}")
-    case (network, date, Success(status)) =>
-      TextMessage(s"${dateFormatter.format(date)} - $network - ${status.text}")
+  private def statusToMessage: (StatusUpdate[String]) => Message = {
+    case (network, date, tryStatus) =>
+      val msg = tryStatus match {
+        case Success(status) => status.html.toString
+        case Failure(e) => s"Error: ${e.getMessage}"
+      }
+      TextMessage(s"${dateFormatter.format(date)} - $network - $msg")
   }
 
   private val feed = Feed(
-    "GitHub" -> new GithubFeed("google"),
-    "Twitter" -> new TwitterFeed("Google")
+    "Google on GitHub" -> new GithubFeed("google"),
+    "Google on Twitter" -> new TwitterFeed("Google"),
+    "ASF on GitHub" -> new GithubFeed("apache"),
+    "ASF on Twitter" -> new TwitterFeed("TheASF")
   )(5)
 
   def feedSource =

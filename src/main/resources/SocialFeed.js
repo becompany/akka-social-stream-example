@@ -1,17 +1,30 @@
 "use strict";
 
 $(function() {
-  var socket = new WebSocket("ws://" + location.host + "/feed");
+
+  var url = "ws://" + location.host + "/feed";
+  var $loading = $("#loading");
   var $container = $("#feed");
 
-  socket.onopen = function(event) {
-    $container.empty();
+  function setupFeed() {
+    var socket = new WebSocket(url);
+
+    socket.onopen = function(event) {
+      $loading.remove();
+    }
+
+    socket.onmessage = function(event) {
+      var p = $("<p>").html(event.data);
+      $container.prepend(p);
+    }
+
+    socket.onclose = function() {
+      setTimeout(setupFeed, 1000);
+    };
+
   }
 
-  socket.onmessage = function(event) {
-    var p = $("<p>").text(event.data);
-    $container.prepend(p);
-  }
+  setupFeed();
 
 });
 
